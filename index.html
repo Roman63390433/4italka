@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ru" data-style="calm">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Читалка</title>
+<meta name="theme-color" content="#121212">
+<meta name="description" content="Читалка книг fb2 и epub">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== ПОЛКА ===== -->
+<main id="shelf" class="screen shelf">
+  <div class="shelf-head">
+    <h1 class="page-title"><span>Мои</span> <span>книги</span></h1>
+    <button class="icon-btn" id="addBtn" aria-label="Добавить книгу">+</button>
+  </div>
+  <input type="file" id="fileInput" accept=".fb2,.epub,.zip,application/epub+zip,application/zip" multiple hidden>
+  <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Название или автор" aria-label="Поиск по полке"></label>
+  <section id="continue" class="continue" hidden></section>
+  <div class="ornament" aria-hidden="true"></div>
+  <ul id="books" class="books"></ul>
+  <div id="empty" class="empty" hidden>
+    <p class="empty-title">Полка пока пуста</p>
+    <p>Нажмите «+» и выберите книгу в формате fb2, fb2.zip или epub — например, из папки «Загрузки».</p>
+    <button class="primary" id="emptyAdd">Добавить книгу</button>
+  </div>
+</main>
+
+<!-- ===== ЕЩЁ ===== -->
+<main id="more" class="screen more" hidden>
+  <div class="shelf-head"><h1 class="page-title">Ещё</h1></div>
+  <section class="more-block">
+    <h2 class="sec">Стиль приложения</h2>
+    <div class="styles" data-role="styles"></div>
+  </section>
+  <section class="more-block">
+    <h2 class="sec">Память</h2>
+    <p id="usage" class="muted">Считаю…</p>
+    <button class="secondary" id="persistBtn">Не удалять книги при нехватке места</button>
+  </section>
+  <section class="more-block">
+    <h2 class="sec">О приложении</h2>
+    <p class="muted">Читалка открывает книги fb2, fb2.zip и epub. Книги хранятся только в этом телефоне, в интернет ничего не отправляется. Скоро: главная с каталогом и новостями, закладки, прокрутка лентой.</p>
+  </section>
+</main>
+
+<nav class="tabbar" id="tabbar">
+  <a data-tab="shelf" class="on" href="#"><i class="ic ic-shelf"></i>Полка</a>
+  <a data-tab="more" href="#"><i class="ic ic-more"></i>Ещё</a>
+</nav>
+
+<!-- ===== ЧТЕНИЕ ===== -->
+<section id="reader" class="reader" hidden>
+  <div class="viewport" id="viewport"><div class="flow" id="flow" lang="ru"></div></div>
+  <footer class="pagenum" id="pagenum"></footer>
+  <div class="dimmer" id="dimmer"></div>
+
+  <div class="menu-top" id="menuTop">
+    <button class="icon-btn" id="backBtn" aria-label="К полке">‹</button>
+    <div><p class="mt-title" id="rTitle"></p><p class="mt-author" id="rAuthor"></p></div>
+    <button class="icon-btn" id="bookMenuBtn" aria-label="Действия с книгой">⋮</button>
+  </div>
+  <div class="menu-bottom" id="menuBottom">
+    <div class="p-head"><span id="rChapter"></span><span id="rLeft"></span></div>
+    <input type="range" id="rSlider" min="0" max="1000" value="0" aria-label="Место в книге">
+    <p class="p-pct" id="rPercent"></p>
+    <div class="tools">
+      <button id="tocBtn">Оглавление</button>
+      <button id="lookBtn">Оформление</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ПАНЕЛИ ===== -->
+<div class="backdrop" id="backdrop" hidden></div>
+
+<div class="sheet" id="lookSheet" hidden>
+  <div class="grip"></div>
+  <div class="row-label">Стиль</div>
+  <div class="styles" data-role="styles"></div>
+  <div class="row-label">Страница</div>
+  <div class="themes" id="pageChips"></div>
+  <div class="font-row">
+    <button class="font-pick" id="fontBtn" aria-label="Сменить шрифт"><span class="font-name" id="fontName"></span><span class="dots" id="fontDots"></span></button>
+    <div class="stepper"><button id="sizeDown" aria-label="Меньше">A−</button><button id="sizeUp" aria-label="Больше">A+</button></div>
+  </div>
+  <div class="seg-row">
+    <div class="seg" id="lhSeg" aria-label="Межстрочный интервал"></div>
+    <div class="seg" id="marginSeg" aria-label="Поля"></div>
+  </div>
+  <div class="toggle-row"><span>Приглушить экран</span><input type="range" id="dimRange" min="0" max="70" value="0" aria-label="Приглушить экран"></div>
+</div>
+
+<div class="sheet tall" id="tocSheet" hidden>
+  <div class="grip"></div>
+  <h2 class="sheet-title">Оглавление</h2>
+  <ol class="toc" id="toc"></ol>
+</div>
+
+<div class="sheet" id="noteSheet" hidden>
+  <div class="grip"></div>
+  <div class="note-body" id="noteBody"></div>
+</div>
+
+<div class="sheet" id="askSheet" hidden>
+  <div class="grip"></div>
+  <p class="ask-text" id="askText"></p>
+  <div class="ask-btns" id="askBtns"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
