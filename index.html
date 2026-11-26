@@ -65,20 +65,23 @@
 <section id="reader" class="reader" hidden>
   <div class="viewport" id="viewport"><div class="flow" id="flow" lang="ru"></div></div>
   <footer class="pagenum" id="pagenum"></footer>
+  <div class="ribbon" id="ribbon" hidden aria-hidden="true"></div>
   <div class="dimmer" id="dimmer"></div>
 
   <div class="menu-top" id="menuTop">
     <button class="icon-btn" id="backBtn" aria-label="К полке">‹</button>
     <div><p class="mt-title" id="rTitle"></p><p class="mt-author" id="rAuthor"></p></div>
+    <button class="icon-btn bm-btn" id="bmBtn" aria-label="Закладка на этой странице" aria-pressed="false"><i class="ic ic-bm"></i></button>
     <button class="icon-btn" id="bookMenuBtn" aria-label="Действия с книгой">⋮</button>
   </div>
   <div class="menu-bottom" id="menuBottom">
     <div class="p-head"><span id="rChapter"></span><span id="rLeft"></span></div>
-    <input type="range" id="rSlider" min="0" max="1000" value="0" aria-label="Место в книге">
+    <div class="slider-wrap"><div class="ticks" id="ticks" aria-hidden="true"></div><input type="range" id="rSlider" min="0" max="1000" value="0" aria-label="Место в книге"></div>
     <p class="p-pct" id="rPercent"></p>
     <div class="tools">
       <button id="tocBtn">Оглавление</button>
-      <button id="lookBtn" aria-label="Оформление"><b class="aa">Aa</b> Оформление</button>
+      <button id="marksBtn">Закладки</button>
+      <button id="lookBtn" aria-label="Оформление"><b class="aa">Aa</b></button>
     </div>
   </div>
 </section>
@@ -115,6 +118,24 @@
   <div class="grip"></div>
   <div class="note-body" id="noteBody"></div>
 </div>
+
+<div class="sheet tall" id="marksSheet" hidden>
+  <div class="grip"></div>
+  <div class="seg tabs" id="marksTabs"><button data-tab="bookmark">Закладки</button><button data-tab="note">Заметки</button></div>
+  <label class="search in-sheet" id="notesSearchBox"><span aria-hidden="true">⌕</span><input id="notesSearch" type="search" placeholder="Поиск по заметкам" aria-label="Поиск по заметкам"></label>
+  <div id="marksList" class="marks-list"></div>
+  <button class="secondary export-btn" id="exportBtn">Сохранить заметки в файл</button>
+</div>
+
+<div class="sheet" id="noteEditSheet" hidden>
+  <div class="grip"></div>
+  <blockquote class="ne-quote" id="neQuote"></blockquote>
+  <div class="color-dots" id="neColors" aria-label="Цвет"></div>
+  <textarea id="neText" rows="4" placeholder="Ваша мысль об этом месте…" aria-label="Текст заметки"></textarea>
+  <div class="ne-btns"><button class="danger" id="neDel">Удалить</button><button class="primary" id="neSave">Сохранить</button></div>
+</div>
+
+<div class="sel-bar" id="selBar" hidden><span class="color-dots" id="selColors"></span><button id="selNote">Заметка</button></div>
 
 <div class="sheet" id="askSheet" hidden>
   <div class="grip"></div>

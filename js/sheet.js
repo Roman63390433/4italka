@@ -97,11 +97,18 @@ export function ask(text, buttons) {
   });
 }
 
-// ---- короткая подсказка внизу экрана ----
+// ---- короткая подсказка внизу экрана; action — необязательная кнопка { text, fn } («Вернуть») ----
 let toastTimer;
-export function toast(msg, ms = 3200) {
+export function toast(msg, ms = 3200, action = null) {
   const t = $("toast");
   t.textContent = msg;
+  if (action) {
+    const b = document.createElement("button");
+    b.textContent = action.text;
+    b.onclick = () => { t.classList.remove("show"); action.fn(); };
+    t.appendChild(b);
+  }
+  t.classList.toggle("has-action", !!action);
   t.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), ms);

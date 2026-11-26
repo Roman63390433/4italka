@@ -5,11 +5,18 @@ let dbPromise = null;
 function db() {
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = () => {
+      const req = indexedDB.open(DB_NAME, 2);
+      // версия базы растёт, когда появляются новые «ящики»; старые данные при этом остаются
+      req.onupgradeneeded = e => {
         const d = req.result;
-        d.createObjectStore("books", { keyPath: "id" });
-        d.createObjectStore("files", { keyPath: "id" });
+        if (e.oldVersion < 1) {
+          d.createObjectStore("books", { keyPath: "id" });
+          d.createObjectStore("files", { keyPath: "id" });
+        }
+        if (e.oldVersion < 2) {
+          // закладки и заметки; индекс bookId — чтобы быстро достать всё по одной книге
+          d.createObjectStore("marks", { keyPath: "id" }).createIndex("bookId", "bookId");
+        }
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
@@ -44,8 +51,19 @@ export function addBook(book, blob) {
 export function deleteBook(id) {
   localStorage.removeItem("chitalka.pos." + id);
   localStorage.removeItem("chitalka.look." + id);
-  return run(["books", "files"], "readwrite", (b, f) => { b.delete(id); f.delete(id); });
+  return run(["books", "files", "marks"], "readwrite", (b, f, m) => {
+    b.delete(id); f.delete(id);
+    m.index("bookId").openKeyCursor(IDBKeyRange.only(id)).onsuccess = e => {
+      const c = e.target.result;
+      if (c) { m.delete(c.primaryKey); c.continue(); }
+    };
+  });
 }
+
+// ---- закладки и заметки ----
+export const listMarks = bookId => run(["marks"], "readonly", m => m.index("bookId").getAll(bookId));
+export const putMark = mark => run(["marks"], "readwrite", m => m.put(mark));
+export const deleteMark = id => run(["marks"], "readwrite", m => m.delete(id));
 
 // позиция чтения: { ch — номер главы, off — номер первой видимой буквы в главе, percent — сколько прочитано, at — когда }
 // (в старых позициях вместо off было frac — доля главы; читалка понимает оба вида)

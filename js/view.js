@@ -18,6 +18,7 @@ export class BookView {
     this.book = null;
     this.ch = 0;                // глава
     this.off = 0;               // якорь: номер первой видимой буквы в главе
+    this.decorate = null;       // (элемент главы, номер главы) → подсветить заметки до подсчёта букв
   }
 
   setBook(book) {

@@ -1,13 +1,13 @@
 // «Сторож» (Service Worker): хранит копию файлов приложения, чтобы читалка открывалась без интернета.
 // Файлы приложения берутся из сети, а копия нужна на случай, когда интернета нет.
 // При добавлении новых файлов впишите их в FILES и увеличьте VERSION.
-const VERSION = "v2";
+const VERSION = "v3";
 const APP = "chitalka-app-" + VERSION;
 const FONTS = "chitalka-fonts";
 const FILES = [
   "./", "index.html", "manifest.json", "css/style.css",
   "js/app.js", "js/shelf.js", "js/reader-ui.js", "js/look.js", "js/sheet.js", "js/settings.js",
-  "js/storage.js", "js/paginator.js", "js/scroller.js", "js/view.js", "js/anchor.js", "js/zip.js", "js/sanitize.js",
+  "js/storage.js", "js/paginator.js", "js/scroller.js", "js/view.js", "js/anchor.js", "js/marks.js", "js/marks-ui.js", "js/zip.js", "js/sanitize.js",
   "js/parsers/index.js", "js/parsers/fb2.js", "js/parsers/epub.js",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png",
 ];

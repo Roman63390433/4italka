@@ -35,6 +35,7 @@ export class Scroller extends BookView {
     s.className = "chap";
     s.dataset.ch = ch;
     s.innerHTML = this.book.chapters[ch].html;
+    this.decorate?.(s, ch);
     s._index = new TextIndex(s);
     return s;
   }
@@ -151,6 +152,22 @@ export class Scroller extends BookView {
 
   rootOf(ch) { return this.sec(ch); }
   indexOf(ch) { return this.sec(ch)?._index || null; }
+  reindex(ch) { const s = this.sec(ch); if (s) s._index = new TextIndex(s); }
+
+  // видна ли буква off главы ch на экране
+  isShown(ch, off) {
+    const r = this.indexOf(ch)?.rectAt(off);
+    if (!r) return false;
+    const v = this.viewport.getBoundingClientRect();
+    return r.bottom > this.top() && r.top < v.bottom;
+  }
+
+  // буквы текущей главы, видные на экране: [start, end)
+  shownRange() {
+    const s = this.sec(this.ch), bottom = this.viewport.getBoundingClientRect().bottom;
+    const end = s ? s._index.firstVisible(r => r.top < bottom - 1) : this.off;
+    return { ch: this.ch, start: this.off, end: Math.max(end, this.off) };
+  }
 
   state() {
     const s = this.sec(this.ch);

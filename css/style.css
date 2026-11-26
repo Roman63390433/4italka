@@ -167,6 +167,26 @@ input[type=range]{width:100%;accent-color:var(--accent);height:32px}
 .tools button{flex:1;padding:11px 0;font-size:14px;border-radius:var(--r-btn);background:var(--surface);color:var(--ink)}
 .reader .menu-top,.reader .menu-bottom{max-width:none}
 
+/* ---- закладки и заметки в читалке ---- */
+.c-yellow{--hl:rgba(240,196,60,.38);--dot:#e6b93a}
+.c-green{--hl:rgba(104,186,110,.36);--dot:#5faa64}
+.c-blue{--hl:rgba(86,156,226,.36);--dot:#4f93d6}
+.c-pink{--hl:rgba(228,108,150,.34);--dot:#d8648f}
+.flow mark.hl{background:var(--hl);color:inherit;border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.bm-btn .ic-bm{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M6.5 3.5h11v17l-5.5-4.2-5.5 4.2z'/%3E%3C/svg%3E")}
+.bm-btn.on{color:var(--accent)}
+.bm-btn.on .ic-bm{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M6.5 3.5h11v17l-5.5-4.2-5.5 4.2z'/%3E%3C/svg%3E")}
+.ribbon{position:absolute;top:0;right:22px;width:14px;height:26px;background:var(--accent);opacity:.85;z-index:2;pointer-events:none;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%)}
+.slider-wrap{position:relative}
+.ticks{position:absolute;left:0;right:0;top:3px;height:8px;pointer-events:none}
+.ticks i{position:absolute;top:0;width:3px;height:8px;margin-left:-1.5px;border-radius:1px;background:var(--accent)}
+.sel-bar{position:fixed;z-index:15;display:flex;align-items:center;gap:6px;padding:6px 6px 6px 10px;border-radius:999px;background:var(--bar);color:var(--ink);box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.sel-bar #selNote{padding:9px 14px;border-radius:999px;background:var(--surface);font-size:14px}
+.color-dots{display:flex;gap:6px}
+.dot{width:32px;height:32px;border-radius:50%;background:var(--dot);outline:2px solid transparent;outline-offset:2px}
+.dot.on{outline-color:var(--ink)}
+
 /* ================== ПАНЕЛИ ================== */
 .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:20;opacity:0;transition:opacity .2s}
 .backdrop.open{opacity:1}
@@ -218,6 +238,30 @@ input[type=range]{width:100%;accent-color:var(--accent);height:32px}
 .toc button.on{color:var(--accent);font-weight:600}
 .note-body{font-family:var(--read,serif);font-size:16px;line-height:1.5;padding:4px 2px 8px}
 .note-body p+p{margin-top:.5em}
+.tabs{margin-bottom:12px}
+.tabs button{flex:1;padding:10px 0;font-size:14.5px}
+.search.in-sheet{margin:0 0 10px}
+.marks-list{padding-bottom:12px}
+.marks{list-style:none}
+.marks li{overflow:hidden;border-radius:var(--r);transition:opacity .18s}
+.marks li.gone{opacity:0}
+.marks li+li{margin-top:4px}
+.mark-row{display:block;width:100%;text-align:left;padding:11px 12px;border-radius:var(--r);background:var(--surface);transition:transform .18s}
+.mark-row.is-note{box-shadow:inset 4px 0 0 var(--dot);padding-left:16px}
+.mr-meta{display:block;font-size:12.5px;color:var(--muted)}
+.mr-quote{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-family:var(--read,serif);font-size:15px;line-height:1.4}
+.mark-row:not(.is-note) .mr-quote{-webkit-line-clamp:2;margin-top:2px}
+.mr-note{display:block;margin:6px 0 2px;font-size:14px;line-height:1.4}
+.marks-ch{font:var(--list-title);font-weight:600;margin:14px 2px 6px}
+.marks-ch:first-child{margin-top:2px}
+.marks-empty{padding:24px 6px;text-align:center}
+.export-btn{width:100%;margin-top:4px}
+.ne-quote{font-family:var(--read,serif);font-size:15.5px;line-height:1.45;max-height:7.4em;overflow:auto;padding:4px 2px 12px;color:var(--ink)}
+#noteEditSheet .color-dots{margin-bottom:12px}
+#neText{width:100%;resize:vertical;min-height:96px;padding:12px;border-radius:var(--r);background:var(--surface);color:var(--ink);font:15px/1.45 var(--ui);border:0;outline:0}
+#neText:focus{box-shadow:inset 0 0 0 2px var(--accent)}
+.ne-btns{display:flex;gap:8px;margin-top:12px}
+.ne-btns button{flex:1;padding:12px}
 .ask-text{font:var(--book-title);margin:4px 0 16px}
 .ask-btns{display:flex;flex-direction:column;gap:8px}
 .ask-btns button{width:100%;padding:13px}
@@ -225,6 +269,9 @@ input[type=range]{width:100%;accent-color:var(--accent);height:32px}
 .toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);max-width:calc(100% - 32px);width:max-content;
   background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:30;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.has-action{display:flex;align-items:center;gap:14px}
+.toast.show.has-action{pointer-events:auto}
+.toast button{font-weight:600;color:var(--accent);padding:4px 2px;filter:brightness(.8)}
 
 /* ================== ДЕТАЛИ СТИЛЕЙ ================== */
 /* винтаж: курсив, лесенка в заголовке, обложки наискось, буквица */

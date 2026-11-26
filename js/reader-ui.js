@@ -5,6 +5,7 @@ import { Paginator } from "./paginator.js";
 import { Scroller } from "./scroller.js";
 import { openSheet, closeSheet, pushLayer, back, toast } from "./sheet.js";
 import { current as look, setBookLook } from "./look.js";
+import { initMarks, openMarks, closeMarks, decorate, onPage, drawTicks, tapOnMark } from "./marks-ui.js";
 
 const $ = id => document.getElementById(id);
 const reader = $("reader"), viewport = $("viewport"), flow = $("flow");
@@ -13,6 +14,7 @@ let book = null, bookId = null, wakeLock = null, onClosed = null;
 // два режима чтения с одинаковыми командами; pag — тот, что включён сейчас
 const views = { pages: new Paginator(viewport, flow, render), scroll: new Scroller(viewport, flow, render) };
 let pag = views.pages;
+for (const v of Object.values(views)) v.decorate = decorate;      // подсветка заметок в тексте
 
 function render(st) {
   if (!book) return;
@@ -22,6 +24,7 @@ function render(st) {
   $("rPercent").textContent = `${st.percent}% от всей книги`;
   $("rSlider").value = Math.round(st.frac * 1000);
   savePos(bookId, { ch: st.ch, off: st.off, percent: st.percent });
+  onPage();
 }
 
 // сменить режим «страницы / лента», оставшись на той же букве
@@ -54,6 +57,7 @@ export async function openBook(id, closedCallback) {
     $("rAuthor").textContent = book.author;
     if (meta) updateBook({ ...meta, opened: Date.now() });
     setBookLook(id);                                  // у книги могут быть свои шрифт и размер
+    await openMarks(id, book);                        // закладки и заметки — до показа текста, чтобы сразу подсветить
     pag.detach();
     pag = views[look().mode] || views.pages;
     pag.attach();
@@ -61,6 +65,7 @@ export async function openBook(id, closedCallback) {
     pag.setBook(book);
     const pos = getPos(id) || { ch: 0, off: 0 };      // старые позиции хранили frac — show понимает и их
     pag.show(pos.ch, { off: pos.off, frac: pos.frac });
+    drawTicks();
     keepAwake();
   } catch (e) {
     flow.innerHTML = "";
@@ -75,6 +80,7 @@ function closeNow() {
   releaseBook(book);
   book = null;
   pag.detach();
+  closeMarks();
   setBookLook(null);
   exitFullscreen();
   wakeLock?.release().catch(() => {});
@@ -109,13 +115,16 @@ const EDGE = 56;                                     // нижняя полос�
 let touch = null, swiped = false;
 const scrollMode = () => look().mode === "scroll";
 const hasSelection = () => !document.getSelection().isCollapsed;
+// если касание началось при выделенном тексте — это «снять выделение», а не «листать»
+let selAtStart = false;
+viewport.addEventListener("pointerdown", () => { selAtStart = hasSelection(); });
 
 viewport.addEventListener("touchstart", e => {
   const t = e.touches[0];
   touch = e.touches.length === 1 && t.clientY < window.innerHeight - EDGE ? { x: t.clientX, y: t.clientY } : null;
 }, { passive: true });
 viewport.addEventListener("touchend", e => {
-  if (!touch || !book || hasSelection()) { touch = null; return; }
+  if (!touch || !book || hasSelection() || selAtStart) { touch = null; return; }
   const dx = e.changedTouches[0].clientX - touch.x, dy = e.changedTouches[0].clientY - touch.y;
   const y0 = touch.y / window.innerHeight;
   touch = null;
@@ -132,8 +141,9 @@ viewport.addEventListener("touchend", e => {
 
 viewport.addEventListener("click", e => {
   if (swiped) { swiped = false; return; }
-  if (!book || hasSelection()) return;
+  if (!book || hasSelection() || selAtStart) { selAtStart = false; return; }
   if (e.clientY > window.innerHeight - EDGE) return;   // у нижнего края — ничего, чтобы не спорить с системой
+  if (!menuOpen() && tapOnMark(e.target)) return;      // тап по подсветке — открыть заметку
   const note = e.target.closest(".note");
   if (note && book.notes.has(note.dataset.note)) {
     $("noteBody").innerHTML = book.notes.get(note.dataset.note);   // HTML сносок собран нами в fb2.js
@@ -184,3 +194,9 @@ $("bookMenuBtn").onclick = () => {
   const st = pag.state();
   toast(`${book.title}. Глав: ${book.chapters.length}. Прочитано ${st.percent}%.`, 4000);
 };
+
+initMarks({
+  view: () => (book ? pag : null),
+  goTo: (ch, off) => pag.show(ch, { off }),
+  closeMenu: () => setMenu(false),
+});

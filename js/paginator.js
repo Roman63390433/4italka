@@ -21,6 +21,7 @@ export class Paginator extends BookView {
   show(ch, at = {}) {
     this.ch = this.clampCh(ch);
     this.flow.innerHTML = this.book.chapters[this.ch].html;
+    this.decorate?.(this.flow, this.ch);
     this.index = new TextIndex(this.flow);
     this.measure();
     if (at.end) { this.page = this.pages - 1; this.apply(); return; }
@@ -85,6 +86,22 @@ export class Paginator extends BookView {
   // элемент с текстом главы ch, если она сейчас на экране (для подсветки заметок)
   rootOf(ch) { return ch === this.ch ? this.flow : null; }
   indexOf(ch) { return ch === this.ch ? this.index : null; }
+  // текст главы поменялся (добавили или сняли подсветку) — пересчитать кусочки
+  reindex(ch) { if (ch === this.ch) this.index = new TextIndex(this.flow); }
+
+  // видна ли буква off главы ch на текущей странице
+  isShown(ch, off) { return ch === this.ch && this.index && this.pageOf(off) === this.page; }
+
+  // глава и буквы, которые сейчас на экране: [start, end)
+  shownRange() {
+    const start = this.firstOnPage();
+    let end = this.index.total;
+    if (this.page < this.pages - 1) {
+      const left = this.flow.getBoundingClientRect().left, edge = (this.page + 1) * this.step;
+      end = this.index.firstVisible(r => r.left - left < edge - 2);
+    }
+    return { ch: this.ch, start, end };
+  }
 
   state() { return this.makeState(this.page, this.pages, this.index?.total || 0); }
 }

@@ -86,6 +86,21 @@ export class TextIndex {
     return this.starts[lo] + a;
   }
 
+  // текст от буквы start до end; между абзацами и заголовками ставим пробел, чтобы слова не слипались
+  text(start, end) {
+    const BLOCK = "p,h1,h2,h3,h4,h5,h6,div,li,blockquote,td,th,section,tr";
+    let out = "", lastBlock = null;
+    this.nodes.forEach((node, i) => {
+      const a = this.starts[i], b = a + node.data.length;
+      if (b <= start || a >= end) return;
+      const block = node.parentElement?.closest(BLOCK);
+      if (out && block !== lastBlock) out += " ";
+      lastBlock = block;
+      out += node.data.slice(Math.max(0, start - a), Math.min(node.data.length, end - a));
+    });
+    return out.replace(/\s+/g, " ").trim();
+  }
+
   // Range от буквы start до end — для подсветки и заметок
   range(start, end) {
     const a = this.pointAt(start), b = this.pointAt(end);
@@ -95,4 +110,35 @@ export class TextIndex {
     r.setEnd(b.node, b.offset);
     return r;
   }
+}
+
+// Обернуть буквы start..end в элементы-подсветки (может понадобиться несколько: отрывок идёт через абзацы).
+// make() создаёт пустой элемент (например <mark>). Текст не меняется, поэтому номера букв остаются прежними,
+// но кусочки текста делятся — после этого TextIndex нужно построить заново.
+export function wrapRange(index, start, end, make) {
+  if (end <= start) return;
+  const parts = [];
+  index.nodes.forEach((node, i) => {
+    const a = index.starts[i], b = a + node.data.length;
+    if (b <= start || a >= end || !node.data.trim()) return;
+    parts.push({ node, from: Math.max(0, start - a), to: Math.min(node.data.length, end - a) });
+  });
+  for (const { node, from, to } of parts) {
+    let piece = node;
+    if (to < piece.data.length) piece.splitText(to);
+    if (from > 0) piece = piece.splitText(from);
+    const el = make();
+    piece.parentNode.insertBefore(el, piece);
+    el.appendChild(piece);
+  }
+}
+
+// снять подсветки, выбранные селектором, вернув текст на место
+export function unwrap(root, selector) {
+  root.querySelectorAll(selector).forEach(el => {
+    const parent = el.parentNode;
+    while (el.firstChild) parent.insertBefore(el.firstChild, el);
+    el.remove();
+    parent.normalize();
+  });
 }
