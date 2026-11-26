@@ -94,4 +94,19 @@ const epub = zip([
   ["OEBPS/text/ch2.xhtml", u(xhtml("2", `<h2 id="start">Ночь вторая</h2>${para(25)}<iframe src="https://example.com"></iframe>`))],
 ]);
 fs.writeFileSync(new URL("belye-nochi.epub", dir), epub);
+// ---- маленькая серия для проверки серий: fb2 №1, №2, №4 (третьей нет — «пропуск») и epub №5 с меткой Calibre ----
+const seriesFb2 = n => `<?xml version="1.0" encoding="utf-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink">
+<description><title-info><author><first-name>Тест</first-name><last-name>Серийный</last-name></author>
+<book-title>Тестовая серия, книга ${n}</book-title><sequence name="Тестовая серия" number="${n}"/><lang>ru</lang></title-info></description>
+<body><section><title><p>Глава</p></title>${para(4)}</section></body></FictionBook>`;
+for (const n of [1, 2, 4]) fs.writeFileSync(new URL(`seriya-${n}.fb2`, dir), u(seriesFb2(n)));
+fs.writeFileSync(new URL("seriya-5.epub", dir), zip([
+  ["mimetype", u("application/epub+zip"), true],
+  ["META-INF/container.xml", u(`<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`)],
+  ["content.opf", u(`<?xml version="1.0" encoding="utf-8"?><package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf"><dc:identifier id="id">s5</dc:identifier><dc:title>Тестовая серия, книга 5</dc:title><dc:creator>Тест Серийный</dc:creator><meta name="calibre:series" content="Тестовая серия"/><meta name="calibre:series_index" content="5.0"/></metadata>
+<manifest><item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="c1"/></spine></package>`)],
+  ["ch1.xhtml", u(`<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>5</title></head><body><h2>Глава</h2>${para(4)}</body></html>`)],
+]));
+
 console.log("Готово:", fs.readdirSync(dir).join(", "));

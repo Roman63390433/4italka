@@ -1,19 +1,19 @@
 // «Сторож» (Service Worker): хранит копию файлов приложения, чтобы читалка открывалась без интернета.
 // Файлы приложения берутся из сети, а копия нужна на случай, когда интернета нет.
 // При добавлении новых файлов впишите их в FILES и увеличьте VERSION.
-const VERSION = "v3";
+const VERSION = "v5";
 const APP = "chitalka-app-" + VERSION;
 const FONTS = "chitalka-fonts";
 const FILES = [
   "./", "index.html", "manifest.json", "css/style.css",
   "js/app.js", "js/shelf.js", "js/reader-ui.js", "js/look.js", "js/sheet.js", "js/settings.js",
-  "js/storage.js", "js/paginator.js", "js/scroller.js", "js/view.js", "js/anchor.js", "js/marks.js", "js/marks-ui.js", "js/zip.js", "js/sanitize.js",
+  "js/storage.js", "js/paginator.js", "js/scroller.js", "js/view.js", "js/anchor.js", "js/marks.js", "js/marks-ui.js", "js/status.js", "js/series.js", "js/series-ui.js", "js/covers.js", "js/zip.js", "js/sanitize.js",
   "js/parsers/index.js", "js/parsers/fb2.js", "js/parsers/epub.js",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png",
 ];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(APP).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(APP).then(c => c.addAll(FILES.map(f => new Request(f, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", e => {
@@ -36,9 +36,10 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // файлы приложения: сначала свежие из сети (и обновляем копию), без интернета — из копии
+  // файлы приложения: сначала свежие из сети (и обновляем копию), без интернета — из копии.
+  // cache: "no-cache" — всегда сверяться с сервером, чтобы после обновления не смешались старые и новые файлы
   if (url.origin === location.origin) {
-    e.respondWith(fetch(e.request).then(r => {
+    e.respondWith(fetch(e.request.url, { cache: "no-cache", credentials: "same-origin" }).then(r => {
       if (r.ok) { const copy = r.clone(); caches.open(APP).then(c => c.put(e.request, copy)); }
       return r;
     }).catch(() => caches.match(e.request, { ignoreSearch: true })));

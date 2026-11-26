@@ -3,7 +3,8 @@ import { getFile, getPos, savePos, getBook, updateBook } from "./storage.js";
 import { parseBook, releaseBook } from "./parsers/index.js";
 import { Paginator } from "./paginator.js";
 import { Scroller } from "./scroller.js";
-import { openSheet, closeSheet, pushLayer, back, toast } from "./sheet.js";
+import { openSheet, closeSheet, pushLayer, back, toast, ask } from "./sheet.js";
+import { statusOnOpen } from "./status.js";
 import { current as look, setBookLook } from "./look.js";
 import { initMarks, openMarks, closeMarks, decorate, onPage, drawTicks, tapOnMark } from "./marks-ui.js";
 
@@ -11,6 +12,7 @@ const $ = id => document.getElementById(id);
 const reader = $("reader"), viewport = $("viewport"), flow = $("flow");
 
 let book = null, bookId = null, wakeLock = null, onClosed = null;
+let askedDone = false;                 // «отметить прочитанной?» спрашиваем один раз за открытие
 // два режима чтения с одинаковыми командами; pag — тот, что включён сейчас
 const views = { pages: new Paginator(viewport, flow, render), scroll: new Scroller(viewport, flow, render) };
 let pag = views.pages;
@@ -25,6 +27,7 @@ function render(st) {
   $("rSlider").value = Math.round(st.frac * 1000);
   savePos(bookId, { ch: st.ch, off: st.off, percent: st.percent });
   onPage();
+  if (st.percent >= 100 && !askedDone) offerDone();
 }
 
 // сменить режим «страницы / лента», оставшись на той же букве
@@ -55,7 +58,11 @@ export async function openBook(id, closedCallback) {
     bookId = id;
     $("rTitle").textContent = book.title;
     $("rAuthor").textContent = book.author;
-    if (meta) updateBook({ ...meta, opened: Date.now() });
+    askedDone = false;
+    if (meta) {
+      const status = statusOnOpen(meta, getPos(id)?.percent || 0);    // «хочу прочитать» → «читаю»
+      updateBook({ ...meta, opened: Date.now(), status, statusAt: status !== meta.status ? Date.now() : meta.statusAt });
+    }
     setBookLook(id);                                  // у книги могут быть свои шрифт и размер
     await openMarks(id, book);                        // закладки и заметки — до показа текста, чтобы сразу подсветить
     pag.detach();
@@ -93,6 +100,19 @@ async function keepAwake() {
   try { wakeLock = await navigator.wakeLock?.request("screen"); } catch { /* не поддерживается — ничего страшного */ }
 }
 document.addEventListener("visibilitychange", () => { if (book && document.visibilityState === "visible") keepAwake(); });
+
+// дочитали до конца — предложить отметить книгу прочитанной (если она ещё не отмечена)
+async function offerDone() {
+  askedDone = true;
+  const id = bookId;
+  const meta = await getBook(id).catch(() => null);
+  if (!meta || meta.status === "done") return;
+  const answer = await ask(`Книга «${meta.title}» дочитана. Отметить её прочитанной?`, [{ id: "done", text: "Отметить прочитанной" }]);
+  if (answer === "done") {
+    const fresh = await getBook(id).catch(() => null);
+    if (fresh) { await updateBook({ ...fresh, status: "done", statusAt: Date.now() }).catch(() => {}); toast("Отмечено: прочитано"); }
+  }
+}
 
 export function relayout() { if (book) pag.relayout(); }
 

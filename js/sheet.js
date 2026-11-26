@@ -78,7 +78,7 @@ document.querySelectorAll(".sheet").forEach(el => {
   });
 });
 
-// ---- вопрос с кнопками: await ask("Удалить?", [{id:"del", text:"Удалить", danger:true}]) ----
+// ---- вопрос с кнопками: await ask("Удалить?", [{id:"del", text:"Удалить", danger:true}]); secondary:true — спокойная кнопка ----
 export function ask(text, buttons) {
   return new Promise(resolve => {
     let answered = false;
@@ -88,7 +88,7 @@ export function ask(text, buttons) {
     for (const b of [...buttons, { id: null, text: "Отмена" }]) {
       const btn = document.createElement("button");
       btn.textContent = b.text;
-      btn.className = b.danger ? "danger" : b.id ? "primary" : "secondary";
+      btn.className = b.danger ? "danger" : b.id && !b.secondary ? "primary" : "secondary";
       btn.onclick = async () => { answered = true; await closeSheet(); resolve(b.id); };
       box.appendChild(btn);
     }

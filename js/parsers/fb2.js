@@ -27,6 +27,10 @@ export function parseFb2(xmlText) {
   const authors = info ? kids(info, "author").map(a =>
     [text(first(a, "first-name")), text(first(a, "last-name"))].filter(Boolean).join(" ") || text(first(a, "nickname"))
   ).filter(Boolean) : [];
+  // серия: <sequence name="..." number="..."/> (может быть вложенной — берём первую с названием)
+  const seq = info ? [...info.getElementsByTagName("*")].find(e => e.localName === "sequence" && e.getAttribute("name")?.trim()) : null;
+  const series = seq ? seq.getAttribute("name").replace(/\s+/g, " ").trim() : null;
+  const seriesNo = seq ? parseFloat(seq.getAttribute("number")) || null : null;
 
   // --- картинки: <binary id="..." content-type="...">base64</binary> ---
   const binaries = new Map();
@@ -164,5 +168,5 @@ export function parseFb2(xmlText) {
     last.chars += lead.textContent.length;
   }
 
-  return { title, author: authors.join(", "), cover, chapters, notes, urls };
+  return { title, author: authors.join(", "), series, seriesNo, cover, chapters, notes, urls };
 }

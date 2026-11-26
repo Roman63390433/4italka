@@ -38,6 +38,7 @@ export async function parseEpub(buffer) {
   // --- описание ---
   const title = clean(byName(opf, "title")[0]?.textContent) || "Без названия";
   const author = byName(opf, "creator").map(e => clean(e.textContent)).filter(Boolean).join(", ");
+  const { series, seriesNo } = seriesOf(opf);
 
   // --- список файлов ---
   const manifest = new Map();
@@ -126,5 +127,23 @@ export async function parseEpub(buffer) {
   }
   if (!chapters.length) throw new Error("В epub не найден текст");
 
-  return { title, author, cover, chapters, notes: new Map(), urls };
+  return { title, author, series, seriesNo, cover, chapters, notes: new Map(), urls };
+}
+
+// серия: Calibre пишет <meta name="calibre:series" content="..."> и calibre:series_index,
+// EPUB 3 — <meta property="belongs-to-collection" id="c1">Название</meta> и <meta refines="#c1" property="group-position">2</meta>
+function seriesOf(opf) {
+  const metas = byName(opf, "meta");
+  const named = n => metas.find(m => m.getAttribute("name") === n)?.getAttribute("content");
+  let series = clean(named("calibre:series")), no = parseFloat(named("calibre:series_index"));
+  if (!series) {
+    const col = metas.find(m => m.getAttribute("property") === "belongs-to-collection");
+    if (col) {
+      series = clean(col.textContent);
+      const id = col.getAttribute("id");
+      const pos = id && metas.find(m => m.getAttribute("refines") === "#" + id && m.getAttribute("property") === "group-position");
+      no = parseFloat(pos?.textContent);
+    }
+  }
+  return { series: series || null, seriesNo: series && Number.isFinite(no) ? no : null };
 }

@@ -24,9 +24,11 @@
   </div>
   <input type="file" id="fileInput" accept=".fb2,.epub,.zip,application/epub+zip,application/zip" multiple hidden>
   <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Название или автор" aria-label="Поиск по полке"></label>
+  <div class="filters" id="filters" role="toolbar" aria-label="Фильтр по статусу" hidden></div>
   <section id="continue" class="continue" hidden></section>
   <div class="ornament" aria-hidden="true"></div>
   <ul id="books" class="books"></ul>
+  <div id="seriesList" class="series-list" hidden></div>
   <div id="empty" class="empty" hidden>
     <p class="empty-title">Полка пока пуста</p>
     <p>Нажмите «+» и выберите книгу в формате fb2, fb2.zip или epub — например, из папки «Загрузки».</p>
@@ -52,7 +54,7 @@
   </section>
   <section class="more-block">
     <h2 class="sec">О приложении</h2>
-    <p class="muted">Читалка открывает книги fb2, fb2.zip и epub. Книги хранятся только в этом телефоне, в интернет ничего не отправляется. Скоро: закладки и заметки, статусы книг и серии, главная с каталогом.</p>
+    <p class="muted">Читалка открывает книги fb2, fb2.zip и epub. Книги хранятся только в этом телефоне, в интернет ничего не отправляется. Статус книги меняется долгим нажатием на неё на полке. Скоро: главная с каталогом.</p>
   </section>
 </main>
 
@@ -133,6 +135,18 @@
   <div class="color-dots" id="neColors" aria-label="Цвет"></div>
   <textarea id="neText" rows="4" placeholder="Ваша мысль об этом месте…" aria-label="Текст заметки"></textarea>
   <div class="ne-btns"><button class="danger" id="neDel">Удалить</button><button class="primary" id="neSave">Сохранить</button></div>
+</div>
+
+<div class="sheet" id="seriesSheet" hidden>
+  <div class="grip"></div>
+  <h2 class="sheet-title" id="ssTitle">Серия</h2>
+  <label class="field"><span>Название серии</span><input id="ssName" list="ssNames" autocomplete="off" placeholder="Например: Плоский мир"></label>
+  <datalist id="ssNames"></datalist>
+  <div class="field-row">
+    <label class="field" id="ssNoBox"><span>Номер книги</span><input id="ssNo" type="text" inputmode="decimal" placeholder="1"></label>
+    <label class="field"><span>Всего книг в серии</span><input id="ssTotal" type="text" inputmode="numeric" placeholder="по полке"></label>
+  </div>
+  <div class="ne-btns"><button class="secondary" id="ssClear">Убрать из серии</button><button class="primary" id="ssSave">Сохранить</button></div>
 </div>
 
 <div class="sel-bar" id="selBar" hidden><span class="color-dots" id="selColors"></span><button id="selNote">Заметка</button></div>

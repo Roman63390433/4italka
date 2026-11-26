@@ -42,7 +42,8 @@ async function run(stores, mode, fn) {
 export const listBooks = () => run(["books"], "readonly", s => s.getAll());
 export const getBook = id => run(["books"], "readonly", s => s.get(id));
 export const getFile = id => run(["files"], "readonly", s => s.get(id)).then(r => r && r.blob);
-export const updateBook = book => run(["books"], "readwrite", s => s.put(book));
+// полка досчитывает у книги percent и st (статус) — в базу эти поля не пишем
+export const updateBook = ({ percent, st, ...book }) => run(["books"], "readwrite", s => s.put(book));
 
 export function addBook(book, blob) {
   return run(["books", "files"], "readwrite", (b, f) => { b.put(book); f.put({ id: book.id, blob }); });
