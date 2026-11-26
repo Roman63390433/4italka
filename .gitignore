@@ -6,3 +6,5 @@
 .taste-skill/
 .claude/
 Thumbs.db
+# Картинки-образцы пользователя в корне
+/*.png
