@@ -43,10 +43,12 @@ export function addBook(book, blob) {
 
 export function deleteBook(id) {
   localStorage.removeItem("chitalka.pos." + id);
+  localStorage.removeItem("chitalka.look." + id);
   return run(["books", "files"], "readwrite", (b, f) => { b.delete(id); f.delete(id); });
 }
 
-// позиция чтения: { ch — номер главы, frac — доля главы 0..1, percent — сколько прочитано, at — когда }
+// позиция чтения: { ch — номер главы, off — номер первой видимой буквы в главе, percent — сколько прочитано, at — когда }
+// (в старых позициях вместо off было frac — доля главы; читалка понимает оба вида)
 export function getPos(id) {
   try { return JSON.parse(localStorage.getItem("chitalka.pos." + id)) || null; }
   catch { return null; }

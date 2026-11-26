@@ -1,13 +1,13 @@
 // Запуск приложения: связывает полку, читалку, оформление и экран «Ещё».
 import { initShelf, renderShelf } from "./shelf.js";
-import { openBook, relayout } from "./reader-ui.js";
-import { initLook } from "./look.js";
+import { openBook, relayout, switchMode } from "./reader-ui.js";
+import { initLook, setFullscreenPref } from "./look.js";
 import { usage, askPersist } from "./storage.js";
 import { toast } from "./sheet.js";
 
 const $ = id => document.getElementById(id);
 
-initLook(relayout);
+initLook({ relayout, mode: switchMode });
 initShelf(id => openBook(id, renderShelf));
 renderShelf();
 
@@ -37,6 +37,8 @@ $("persistBtn").onclick = async () => {
   toast(ok ? "Готово: браузер не будет удалять книги" : "Браузер не разрешил. Установите читалку на главный экран и попробуйте снова.", 5000);
   showUsage();
 };
+
+$("fsToggle").onchange = e => setFullscreenPref(e.target.checked);
 
 // ---- пересчёт страниц при повороте экрана и смене размера окна ----
 let rt;

@@ -42,13 +42,17 @@
     <div class="styles" data-role="styles"></div>
   </section>
   <section class="more-block">
+    <h2 class="sec">Чтение</h2>
+    <label class="switch-row"><span><b>Во весь экран при чтении</b><small>Прячет часы и системные кнопки — реже срабатывает свайп снизу</small></span><input type="checkbox" id="fsToggle" role="switch"></label>
+  </section>
+  <section class="more-block">
     <h2 class="sec">Память</h2>
     <p id="usage" class="muted">Считаю…</p>
     <button class="secondary" id="persistBtn">Не удалять книги при нехватке места</button>
   </section>
   <section class="more-block">
     <h2 class="sec">О приложении</h2>
-    <p class="muted">Читалка открывает книги fb2, fb2.zip и epub. Книги хранятся только в этом телефоне, в интернет ничего не отправляется. Скоро: главная с каталогом и новостями, закладки, прокрутка лентой.</p>
+    <p class="muted">Читалка открывает книги fb2, fb2.zip и epub. Книги хранятся только в этом телефоне, в интернет ничего не отправляется. Скоро: закладки и заметки, статусы книг и серии, главная с каталогом.</p>
   </section>
 </main>
 
@@ -74,7 +78,7 @@
     <p class="p-pct" id="rPercent"></p>
     <div class="tools">
       <button id="tocBtn">Оглавление</button>
-      <button id="lookBtn">Оформление</button>
+      <button id="lookBtn" aria-label="Оформление"><b class="aa">Aa</b> Оформление</button>
     </div>
   </div>
 </section>
@@ -88,15 +92,17 @@
   <div class="styles" data-role="styles"></div>
   <div class="row-label">Страница</div>
   <div class="themes" id="pageChips"></div>
-  <div class="font-row">
-    <button class="font-pick" id="fontBtn" aria-label="Сменить шрифт"><span class="font-name" id="fontName"></span><span class="dots" id="fontDots"></span></button>
-    <div class="stepper"><button id="sizeDown" aria-label="Меньше">A−</button><button id="sizeUp" aria-label="Больше">A+</button></div>
-  </div>
+  <div class="row-label">Шрифт</div>
+  <div class="font-chips" id="fontChips"></div>
+  <div class="slide-row"><span class="sl-a small" aria-hidden="true">A</span><input type="range" id="sizeRange" aria-label="Размер текста"><span class="sl-a big" aria-hidden="true">A</span><output id="sizeVal"></output></div>
+  <div class="slide-row"><span class="sl-name">Интервал</span><input type="range" id="lhRange" aria-label="Межстрочный интервал"><output id="lhVal"></output></div>
+  <div class="slide-row"><span class="sl-name">Поля</span><input type="range" id="marginRange" aria-label="Поля"><output id="marginVal"></output></div>
   <div class="seg-row">
-    <div class="seg" id="lhSeg" aria-label="Межстрочный интервал"></div>
-    <div class="seg" id="marginSeg" aria-label="Поля"></div>
+    <div class="seg" id="alignSeg" aria-label="Выравнивание"></div>
+    <div class="seg" id="modeSeg" aria-label="Режим чтения"></div>
   </div>
-  <div class="toggle-row"><span>Приглушить экран</span><input type="range" id="dimRange" min="0" max="70" value="0" aria-label="Приглушить экран"></div>
+  <div class="slide-row"><span class="sl-name">Приглушить</span><input type="range" id="dimRange" min="0" max="70" value="0" aria-label="Приглушить экран"><output id="dimVal"></output></div>
+  <label class="switch-row" id="bookOnlyRow"><span><b>Только для этой книги</b><small id="bookOnlyHint">Шрифт, размер, интервал, поля и выравнивание</small></span><input type="checkbox" id="bookOnly" role="switch"></label>
 </div>
 
 <div class="sheet tall" id="tocSheet" hidden>

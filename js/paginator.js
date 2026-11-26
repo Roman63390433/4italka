@@ -1,41 +1,40 @@
-// Разбивка текста на страницы. Глава выводится в CSS-колонки шириной в экран:
+// Режим «страницы». Глава выводится в CSS-колонки шириной в экран:
 // одна колонка = одна страница, а «перелистнуть» = сдвинуть текст на ширину экрана.
-// Модуль не знает про кнопки: ему дают элементы и книгу, он сообщает о смене страницы через onChange.
+// Место хранится якорем (номер первой буквы на странице), поэтому после смены шрифта открывается та же фраза.
+import { BookView } from "./view.js";
+import { TextIndex } from "./anchor.js";
 
-export class Paginator {
+export class Paginator extends BookView {
   constructor(viewport, flow, onChange) {
-    this.viewport = viewport;   // окно с overflow:hidden
-    this.flow = flow;           // лента с текстом главы
-    this.onChange = onChange;
-    this.book = null;
-    this.ch = 0; this.page = 0; this.pages = 1;
-    this.step = 1;
+    super(viewport, flow, onChange);
+    this.page = 0; this.pages = 1; this.step = 1;
   }
 
-  setBook(book) {
-    this.book = book;
-    this.before = [];            // сколько букв во всех главах до данной
-    let sum = 0;
-    for (const c of book.chapters) { this.before.push(sum); sum += c.chars; }
+  attach() { this.flow.innerHTML = ""; }
+
+  detach() {
+    this.flow.innerHTML = "";
+    for (const p of ["columnWidth", "columnGap", "width", "transform"]) this.flow.style[p] = "";
   }
 
-  // показать главу ch на месте frac (0 — начало, 1 — конец)
-  show(ch, frac = 0) {
-    const n = this.book.chapters.length;
-    this.ch = Math.max(0, Math.min(n - 1, ch | 0));
+  // показать главу ch с места at ({ off } / { frac } / { end })
+  show(ch, at = {}) {
+    this.ch = this.clampCh(ch);
     this.flow.innerHTML = this.book.chapters[this.ch].html;
+    this.index = new TextIndex(this.flow);
     this.measure();
-    this.page = frac >= 1 ? this.pages - 1 : Math.min(this.pages - 1, Math.floor(frac * this.pages + 1e-6));
-    this.apply();
+    if (at.end) { this.page = this.pages - 1; this.apply(); return; }
+    this.off = this.offsetFor(this.index, at);
+    this.page = this.pageOf(this.off);
+    this.apply(false);                          // якорь оставляем ровно тем, что просили
   }
 
-  // пересчитать страницы (после смены шрифта, размера, поворота экрана) и остаться на том же месте
+  // пересчитать страницы (шрифт, размер, поворот экрана) и остаться на той же букве
   relayout() {
-    if (!this.book) return;
-    const frac = this.pages ? this.page / this.pages : 0;
+    if (!this.book || !this.index) return;
     this.measure();
-    this.page = Math.min(this.pages - 1, Math.round(frac * this.pages));
-    this.apply();
+    this.page = this.pageOf(this.off);
+    this.apply(false);
   }
 
   measure() {
@@ -51,46 +50,41 @@ export class Paginator {
     this.pages = Math.max(1, Math.round((this.flow.scrollWidth + pad) / this.step));
   }
 
-  apply() {
+  // на какой странице буква off
+  pageOf(off) {
+    const rect = this.index.rectAt(off);
+    if (!rect) return off >= this.index.total ? this.pages - 1 : 0;
+    const x = rect.left - this.flow.getBoundingClientRect().left;   // не зависит от сдвига ленты
+    return Math.max(0, Math.min(this.pages - 1, Math.floor((x + 2) / this.step)));
+  }
+
+  // первая буква на текущей странице
+  firstOnPage() {
+    const left = this.flow.getBoundingClientRect().left, start = this.page * this.step;
+    return this.index.firstVisible(r => r.left - left < start - 2);
+  }
+
+  apply(updateAnchor = true) {
     this.flow.style.transform = `translateX(${-this.page * this.step}px)`;
+    if (updateAnchor) this.off = this.firstOnPage();
     this.onChange?.(this.state());
   }
 
   next() {
     if (this.page < this.pages - 1) { this.page++; this.apply(); return true; }
-    if (this.ch < this.book.chapters.length - 1) { this.show(this.ch + 1, 0); return true; }
+    if (this.ch < this.book.chapters.length - 1) { this.show(this.ch + 1, { off: 0 }); return true; }
     return false;                               // конец книги
   }
 
   prev() {
     if (this.page > 0) { this.page--; this.apply(); return true; }
-    if (this.ch > 0) { this.show(this.ch - 1, 1); return true; }
+    if (this.ch > 0) { this.show(this.ch - 1, { end: true }); return true; }
     return false;
   }
 
-  // перейти к доле всей книги (для ползунка): 0..1
-  goToPercent(p) {
-    const target = p * this.book.chars;
-    let ch = 0;
-    while (ch < this.book.chapters.length - 1 && this.before[ch + 1] <= target) ch++;
-    const c = this.book.chapters[ch];
-    this.show(ch, c.chars ? (target - this.before[ch]) / c.chars : 0);
-  }
+  // элемент с текстом главы ch, если она сейчас на экране (для подсветки заметок)
+  rootOf(ch) { return ch === this.ch ? this.flow : null; }
+  indexOf(ch) { return ch === this.ch ? this.index : null; }
 
-  state() {
-    const c = this.book.chapters[this.ch];
-    const frac = this.page / this.pages;
-    const done = this.before[this.ch] + c.chars * ((this.page + 1) / this.pages);
-    // оценка страниц во всей книге: буквы книги / буквы на странице этой главы
-    const perPage = Math.max(300, c.chars / this.pages);
-    const bookPages = Math.max(1, Math.round(this.book.chars / perPage));
-    const bookPage = Math.min(bookPages, Math.round((this.before[this.ch] + c.chars * frac) / perPage) + 1);
-    return {
-      ch: this.ch, page: this.page, pages: this.pages, frac,
-      percent: Math.min(100, Math.round(done / this.book.chars * 100)),
-      left: this.pages - this.page - 1,
-      bookPage, bookPages,
-      chapterTitle: c.title,
-    };
-  }
+  state() { return this.makeState(this.page, this.pages, this.index?.total || 0); }
 }
