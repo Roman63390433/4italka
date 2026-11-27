@@ -13,11 +13,68 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/home.css">
 </head>
 <body>
 
+<!-- ===== ГЛАВНАЯ ===== -->
+<main id="home" class="screen home" hidden>
+  <img class="deco-rose" src="img/rose-plate.jpg" alt="" aria-hidden="true">
+  <div class="shelf-head"><h1 class="page-title home-title"><span>Что</span> <span>почитать</span></h1></div>
+  <label class="search"><span aria-hidden="true">⌕</span><input id="homeSearch" type="search" placeholder="Книга, автор или жанр" aria-label="Поиск книг" enterkeyhint="search"></label>
+  <div id="homeResults" class="home-results" hidden></div>
+  <div id="homeMain">
+    <nav class="filters home-jump" id="homeJump" aria-label="Разделы главной">
+      <button class="fchip" data-to="newSec">Новинки</button>
+      <button class="fchip" data-to="classicSec">Классика</button>
+      <button class="fchip" data-to="authorsSec">Авторы</button>
+      <button class="fchip" data-to="newsSec">Новости</button>
+    </nav>
+
+    <button id="daySec" class="day" hidden>
+      <span class="day-pic"><img src="img/still-life-books.webp" alt="Натюрморт с книгами" width="400" height="300"></span>
+      <span class="day-text">
+        <span class="cont-label">Книга дня</span>
+        <span class="b-title" id="dayTitle"></span>
+        <span class="b-author" id="dayAuthor"></span>
+        <span class="day-desc" id="dayDesc"></span>
+        <span class="b-meta" id="dayTime"></span>
+      </span>
+    </button>
+
+    <section id="newSec" class="home-sec">
+      <h2 class="sec">Новинки</h2>
+      <div class="filters" id="genreChips" role="toolbar" aria-label="Жанр"></div>
+      <ul class="hrow" id="newRow"></ul>
+      <p class="muted home-note" id="newNote" hidden></p>
+    </section>
+
+    <section id="classicSec" class="home-sec" hidden>
+      <h2 class="sec">Классика</h2>
+      <div id="collections"></div>
+    </section>
+
+    <section id="authorsSec" class="home-sec" hidden>
+      <h2 class="sec">Авторы</h2>
+      <ul class="authors" id="authors"></ul>
+    </section>
+
+    <section id="newsSec" class="home-sec">
+      <h2 class="sec">Новости</h2>
+      <ul class="news" id="news"></ul>
+      <p class="muted home-note" id="newsEmpty" hidden>Новости появятся, когда телефон будет в сети.</p>
+      <button class="secondary news-more" id="newsMore" hidden></button>
+    </section>
+
+    <footer class="home-foot">
+      <p id="homeSources"></p>
+      <p>Картинки: «Натюрморт с книгами» (1625), Рейксмузеум, CC0; ботаническая таблица «Choix des plus belles fleurs» (1827), П. Ж. Редуте, общественное достояние.</p>
+    </footer>
+  </div>
+</main>
+
 <!-- ===== ПОЛКА ===== -->
-<main id="shelf" class="screen shelf">
+<main id="shelf" class="screen shelf" hidden>
   <div class="shelf-head">
     <h1 class="page-title"><span>Мои</span> <span>книги</span></h1>
     <button class="icon-btn" id="addBtn" aria-label="Добавить книгу">+</button>
@@ -59,7 +116,8 @@
 </main>
 
 <nav class="tabbar" id="tabbar">
-  <a data-tab="shelf" class="on" href="#"><i class="ic ic-shelf"></i>Полка</a>
+  <a data-tab="home" href="#"><i class="ic ic-home"></i>Главная</a>
+  <a data-tab="shelf" href="#"><i class="ic ic-shelf"></i>Полка</a>
   <a data-tab="more" href="#"><i class="ic ic-more"></i>Ещё</a>
 </nav>
 
@@ -150,6 +208,11 @@
 </div>
 
 <div class="sel-bar" id="selBar" hidden><span class="color-dots" id="selColors"></span><button id="selNote">Заметка</button></div>
+
+<div class="sheet tall" id="bookSheet" hidden>
+  <div class="grip"></div>
+  <div class="book-card" id="bookCard"></div>
+</div>
 
 <div class="sheet" id="askSheet" hidden>
   <div class="grip"></div>

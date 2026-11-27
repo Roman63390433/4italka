@@ -344,6 +344,30 @@ input[type=range]{width:100%;accent-color:var(--accent);height:32px}
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
+/* хочу прочитать — книга на полке без файла (js/wish.js, js/wish-ui.js) */
+.pct.no-file{font-size:11.5px;padding:3px 8px;border-radius:var(--r-btn);border:1px dashed var(--track);color:var(--muted)}
+.cover.wish{opacity:.78}
+.cover.wish::before{content:"";position:absolute;inset:0;border:1.5px dashed var(--cover-ink);border-radius:inherit;opacity:.45;pointer-events:none;z-index:1}
+.wish-sheet .ws-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:12px}
+.wish-sheet .ws-cover .cover.wish{opacity:1}
+.wish-sheet .ws-info{flex:1;min-width:0}
+.wish-sheet .ws-title{margin-bottom:4px}
+.ws-author{font-size:15px}
+.ws-meta{font-size:13px;color:var(--muted);margin-top:4px}
+.ws-nofile{display:inline-block;margin-top:10px;font-size:12px;padding:3px 9px;border-radius:var(--r-btn);border:1px dashed var(--track);color:var(--muted)}
+.ws-status{padding:8px 14px;font-size:13.5px}
+.ws-genres{font-size:13px;color:var(--accent);margin-top:12px}
+.ws-desc{font-size:14.5px;line-height:1.5;white-space:pre-line;margin-top:10px;max-height:34dvh;overflow-y:auto}
+.ws-source{display:inline-block;font-size:13px;color:var(--muted);margin-top:10px;text-decoration:underline;text-underline-offset:3px}
+.ws-btns{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.ws-btns > *{padding:12px;text-align:center;text-decoration:none;color:inherit}
+.ws-btns .primary{color:var(--btn-ink)}
+.ws-btns .ws-del{background:none;color:var(--danger);padding:8px}
+.ws-hint{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+[data-style=vintage] .pct.no-file,[data-style=vintage] .ws-nofile{font-style:italic;border-color:var(--rose);color:var(--rose)}
+[data-style=vintage] .ws-genres{font-style:italic;color:var(--rose)}
+[data-style=autumn] .pct.no-file,[data-style=autumn] .ws-nofile{border-style:solid;border-color:rgba(211,154,69,.45);color:var(--accent);font-family:"Cormorant Garamond",serif;font-weight:600;font-size:13px}
+
 /* ЗАВИТКИ-НАЧАЛО (создаётся tools/ornaments.mjs, руками не править) */
 /* — завитки: vintage — */
 [data-style=vintage] .continue,[data-style=vintage] .more-block{position:relative}

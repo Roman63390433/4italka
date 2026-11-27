@@ -6,49 +6,80 @@ import { STATUSES, statusOf, statusName } from "./status.js";
 import { groupSeries } from "./series.js";
 import { coverEl, releaseCovers, longPress } from "./covers.js";
 import { initSeriesUI, renderSeries, editBookSeries } from "./series-ui.js";
+import { isWish, findWishFor, mergeFile } from "./wish.js";
+import { initWishUI, showWish } from "./wish-ui.js";
 
 const $ = id => document.getElementById(id);
 const FILTER_KEY = "chitalka.shelfFilter";
 let openHandler = () => {};
 let filter = localStorage.getItem(FILTER_KEY) || "all";
+let wishIds = new Set();                 // книги без файла: тап по ним открывает карточку, а не читалку
 
 export function initShelf(onOpen) {
-  openHandler = onOpen;
+  // проверка синхронная (без await), чтобы читалка открылась прямо «от нажатия» — так браузер разрешает полный экран
+  openHandler = id => wishIds.has(id) ? showWish(id) : onOpen(id);
   $("addBtn").onclick = () => $("fileInput").click();
   $("emptyAdd").onclick = () => $("fileInput").click();
-  $("fileInput").onchange = async e => {
+  $("fileInput").onchange = e => {
     const files = [...e.target.files];
     e.target.value = "";                 // чтобы тот же файл можно было выбрать ещё раз
-    for (const f of files) await importFile(f);
-    renderShelf();
+    importFiles(files);
   };
   $("search").oninput = () => renderShelf();
   initSeriesUI(renderShelf);
+  initWishUI({ importFiles, pickStatus, removeWish });
 }
 
-async function importFile(file) {
+// Добавить файлы книг на полку — общий путь для «+», карточки «хочу» и главной (скачанный с Викитеки File).
+// opts.attachTo — id книги «хочу», к которой привязать файл (выбран в её карточке).
+// Возвращает карточки добавленных или привязанных книг: [{ id, title, author, …, result: "added" | "attached" }];
+// уже бывшие на полке и не разобранные файлы в ответ не попадают (о них сказано подсказкой) — тогда массив пустой.
+export async function importFiles(files, opts = {}) {
+  const out = [];
+  for (const f of files) {
+    const book = await importFile(f, opts.attachTo);
+    if (book) out.push(book);
+  }
+  await renderShelf();
+  return out;
+}
+
+async function importFile(file, attachTo = null) {
   toast(`Добавляю «${file.name}»…`, 10000);
   try {
     const book = await parseBook(file, file.name);
     releaseBook(book);
     const existing = await listBooks();
-    if (existing.some(b => b.title === book.title && b.author === book.author && b.size === file.size)) {
+    const dup = existing.find(b => !isWish(b) && b.title === book.title && b.author === book.author && b.size === file.size);
+    if (dup) {
       toast(`«${book.title}» уже на полке`);
-      return;
+      return null;
     }
-    await addBook({
+    // на полке есть такая же книга без файла — файл достаётся ей (статус, серия, заметки сохраняются)
+    const wish = attachTo ? existing.find(b => b.id === attachTo && isWish(b)) : findWishFor(existing, book.title, book.author);
+    if (wish) {
+      const merged = mergeFile(wish, book, file);
+      await addBook(merged, file);
+      askPersist();
+      toast(`Файл добавлен к книге «${wish.title}» — можно читать`, 4000);
+      return { ...merged, result: "attached" };
+    }
+    const card = {
       id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
       title: book.title, author: book.author, format: book.format,
       size: file.size, chars: book.chars, cover: book.cover || null,
       series: book.series || null, seriesNo: book.seriesNo ?? null,
       status: "want", statusAt: Date.now(), scanned: 1,
       added: Date.now(), opened: 0,
-    }, file);
+    };
+    await addBook(card, file);
     askPersist();                         // попросить браузер хранить книги надёжно
     toast(`Добавлено: «${book.title}»`);
+    return { ...card, result: "added" };
   } catch (e) {
     const msg = e.name === "QuotaExceededError" ? "в телефоне не хватает места" : e.message;
     toast(`Не удалось добавить «${file.name}»: ${msg}`, 6000);
+    return null;
   }
 }
 
@@ -70,6 +101,7 @@ export async function renderShelf() {
     return { ...b, percent, st: statusOf(b, percent) };
   });
   books.sort((a, b) => (b.opened || b.added) - (a.opened || a.added));
+  wishIds = new Set(books.filter(isWish).map(b => b.id));
   const series = groupSeries(books);
 
   drawFilters(books, series);
@@ -139,7 +171,8 @@ function bookRow(b, books) {
   open.appendChild(text);
   const pct = document.createElement("span");
   pct.className = "pct";
-  pct.textContent = progressText(b.percent);
+  if (isWish(b)) { pct.classList.add("no-file"); pct.textContent = "нет файла"; }   // прогресса у неё нет
+  else pct.textContent = progressText(b.percent);
   open.appendChild(pct);
   open.onclick = () => openHandler(b.id);
   longPress(open, () => pickStatus(b));
@@ -185,16 +218,18 @@ export async function pickStatus(b) {
 }
 
 async function bookActions(b, books) {
+  const wish = isWish(b);
   const choice = await ask(`«${b.title}»`, [
-    { id: "read", text: "Читать" },
+    { id: "read", text: wish ? "Подробнее и добавить файл" : "Читать" },
     { id: "status", text: `Статус: ${statusName(b.st).toLowerCase()}…`, secondary: true },
     { id: "series", text: b.series ? `Серия: ${b.series}…` : "Указать серию…", secondary: true },
-    { id: "del", text: "Удалить с полки", danger: true },
+    { id: "del", text: wish ? "Убрать с полки" : "Удалить с полки", danger: true },
   ]);
   if (choice === "read") openHandler(b.id);
   if (choice === "status") pickStatus(b);
   if (choice === "series") editBookSeries(b, books);
   if (choice === "del") {
+    if (wish) return removeWish(b);
     const sure = await ask(`Удалить «${b.title}» из читалки? Файл в «Загрузках» останется. Закладки и заметки книги удалятся.`, [{ id: "yes", text: "Удалить", danger: true }]);
     if (sure === "yes") {
       try { await deleteBook(b.id); toast("Книга удалена"); }
@@ -202,6 +237,16 @@ async function bookActions(b, books) {
       renderShelf();
     }
   }
+}
+
+// убрать книгу «хочу» (файла нет — удалять нечего, кроме карточки)
+export async function removeWish(b) {
+  const sure = await ask(`Убрать «${b.title}» из «Хочу прочитать»?`, [{ id: "yes", text: "Убрать", danger: true }]);
+  if (sure !== "yes") return false;
+  try { await deleteBook(b.id); toast("Книга убрана с полки"); }
+  catch { toast("Не удалось убрать книгу"); }
+  renderShelf();
+  return true;
 }
 
 // книги, добавленные до появления серий, один раз перечитываем в фоне, чтобы достать серию из файла

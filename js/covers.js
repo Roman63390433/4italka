@@ -12,14 +12,19 @@ const PALETTE = ["#2d4a5a", "#6b3b2e", "#3d4d36", "#5a4a2e", "#40344f", "#5e6b46
 const colorFor = s => PALETTE[[...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % PALETTE.length];
 
 // size: "" — обычная, "big" — для «Продолжить», "small" — для карточки серии
+// у книги «хочу прочитать» (без файла) обложка может быть ссылкой coverUrl, если сайт не дал скачать картинку
 export function coverEl(b, size = "") {
   const el = document.createElement("div");
-  el.className = "cover" + (size ? " " + size : "");
-  if (b.cover) {
-    const url = URL.createObjectURL(b.cover);
-    coverUrls.push(url);
+  el.className = "cover" + (size ? " " + size : "") + (b.wish ? " wish" : "");
+  if (b.cover || b.coverUrl) {
+    let url = b.coverUrl;
+    if (b.cover) { url = URL.createObjectURL(b.cover); coverUrls.push(url); }
     const img = document.createElement("img");
     img.src = url; img.alt = "";
+    if (!b.cover) {
+      img.referrerPolicy = "no-referrer";
+      img.onerror = () => el.replaceWith(coverEl({ ...b, cover: null, coverUrl: "" }, size));   // нет интернета — рисуем свою
+    }
     el.classList.add("has-img");
     el.appendChild(img);
   } else {

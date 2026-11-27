@@ -1,0 +1,42 @@
+# Робот главной: раз в день собирает data/home.json (новинки FantLab + новости)
+# и кладёт его в main. Секреты не нужны — все источники открытые.
+name: Данные главной
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 03:00 UTC = 06:00 МСК (GitHub может запустить с опозданием)
+  workflow_dispatch:       # кнопка «Run workflow» для ручного запуска
+
+permissions:
+  contents: write          # чтобы робот мог сделать коммит
+
+concurrency:
+  group: home-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Собрать data/home.json
+        run: node tools/build-home.mjs
+
+      - name: Закоммитить, если файл изменился
+        run: |
+          if git diff --quiet -- data/home.json && [ -z "$(git status --porcelain -- data/home.json)" ]; then
+            echo "data/home.json не изменился — коммит не нужен"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/home.json
+          git commit -m "Данные главной: $(date -u +%Y-%m-%d)"
+          git pull --rebase origin main
+          git push origin HEAD:main
